@@ -78,10 +78,10 @@ func main() {
 	}
 
 	// Graceful shutdown
+	signalCtx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
 	go func() {
-		sigChan := make(chan os.Signal, 1)
-		signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
-		<-sigChan
+		<-signalCtx.Done()
 
 		log.Println("Shutting down gracefully...")
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -89,7 +89,9 @@ func main() {
 
 		srv.Shutdown()
 		if srv.HTTPServer != nil {
-			srv.HTTPServer.Shutdown(ctx)
+			if err := srv.HTTPServer.Shutdown(ctx); err != nil {
+				log.Printf("HTTP server shutdown error: %v", err.Error())
+			}
 		}
 		os.Exit(0)
 	}()
