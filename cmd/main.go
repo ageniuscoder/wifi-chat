@@ -8,15 +8,28 @@ import (
 	"math/rand"
 	"os"
 	"os/signal"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
 
 	"wifi-chat/internal/server"
+
+	"github.com/joho/godotenv"
 )
 
 func main() {
-	port := flag.Int("port", 8000, "Server port")
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatalf("Error loading .env file: %s", err.Error())
+	}
+	envPort := 8000
+	if strPort := os.Getenv("PORT"); strPort != "" {
+		if intPort, err := strconv.Atoi(strPort); err == nil {
+			envPort = intPort
+		}
+	}
+	port := flag.Int("port", envPort, "Server port")
 	peer := flag.String("peer", "", "Upstream peer URL (e.g. ws://192.168.1.10:8000/ws/mesh)")
 	nodeName := flag.String("node", "", "Node name for mesh (auto-generated if empty)")
 	flag.Parse()
