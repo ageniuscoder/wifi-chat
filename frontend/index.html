@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0F0F17">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+    <title>WiFi Chat</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+</head>
+<body>
+    <!-- Login Screen -->
+    <div id="login-screen" class="screen">
+        <div class="login-card">
+            <div class="login-logo">
+                <div class="logo-icon">
+                    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
+                </div>
+            </div>
+            <h1>WiFi Chat</h1>
+            <p class="login-subtitle">Peer-to-peer mesh messenger</p>
+            <form id="login-form">
+                <input type="text" id="username-input" placeholder="Choose a username" autocomplete="off" maxlength="20" required>
+                <button type="submit" class="btn-primary">Join Chat →</button>
+            </form>
+            <div id="login-error" class="error-msg hidden"></div>
+            <div class="login-e2ee-badge">🔒 End-to-end encrypted</div>
+        </div>
+    </div>
+
+    <!-- Chat Screen -->
+    <div id="chat-screen" class="screen hidden">
+        <div class="chat-layout">
+            <!-- Sidebar -->
+            <aside class="sidebar" id="sidebar">
+                <div class="sidebar-header">
+                    <h2>WiFi Chat</h2>
+                    <button class="btn-icon sidebar-toggle-btn" id="sidebar-close" title="Close sidebar">✕</button>
+                </div>
+
+                <!-- Rooms -->
+                <div class="sidebar-section">
+                    <div class="section-header">
+                        <h3>Rooms</h3>
+                        <button class="btn-icon" id="create-room-btn" title="Create room">+</button>
+                    </div>
+                    <ul id="room-list" class="nav-list"></ul>
+                </div>
+
+                <!-- Direct Messages -->
+                <div class="sidebar-section">
+                    <div class="section-header">
+                        <h3>Direct Messages</h3>
+                    </div>
+                    <ul id="dm-list" class="nav-list"></ul>
+                </div>
+
+                <!-- Online Users -->
+                <div class="sidebar-section">
+                    <div class="section-header">
+                        <h3>Online</h3>
+                        <span class="badge" id="online-count">0</span>
+                    </div>
+                    <ul id="user-list" class="nav-list"></ul>
+                </div>
+
+                <div class="sidebar-footer">
+                    <div class="user-info">
+                        <span class="status-dot online"></span>
+                        <span id="my-username"></span>
+                    </div>
+                    <button class="btn-icon" id="logout-btn" title="Logout">🚪</button>
+                </div>
+            </aside>
+
+            <!-- Main Chat Area -->
+            <main class="chat-main">
+                <div class="chat-header">
+                    <button class="btn-icon sidebar-toggle-btn" id="sidebar-open" title="Open sidebar">☰</button>
+                    <div class="chat-header-info">
+                        <h3 id="chat-title"># general</h3>
+                        <span id="chat-subtitle" class="chat-subtitle"></span>
+                    </div>
+                    <div id="e2ee-indicator" class="e2ee-indicator hidden" title="End-to-end encrypted">
+                        <span class="lock-icon">🔒</span>
+                    </div>
+                    <div class="call-buttons" id="call-buttons" style="display:none">
+                        <button class="btn-icon call-btn" id="voice-call-btn" title="Voice call">📞</button>
+                        <button class="btn-icon call-btn" id="video-call-btn" title="Video call">📹</button>
+                    </div>
+                    <button class="btn-icon" id="leave-room-btn" title="Leave room" style="display:none">🚪</button>
+                </div>
+
+                <div class="messages-container" id="messages-container">
+                    <div id="messages" class="messages"></div>
+                    <div id="typing-indicator" class="typing-indicator hidden"></div>
+                    <button class="scroll-bottom-btn hidden" id="scroll-bottom-btn" title="Scroll to bottom" onclick="document.getElementById('messages-container').scrollTop = document.getElementById('messages-container').scrollHeight">↓</button>
+                </div>
+
+                <div id="image-preview-bar" class="image-preview-bar hidden">
+                    <img id="image-preview-thumb" class="image-preview-thumb" alt="Preview">
+                    <span id="image-preview-name" class="image-preview-name"></span>
+                    <button type="button" class="btn-icon" id="image-preview-cancel" title="Cancel">✕</button>
+                </div>
+
+                <form class="message-form" id="message-form">
+                    <input type="file" id="image-file-input" accept="image/jpeg,image/png,image/gif,image/webp" hidden>
+                    <button type="button" class="btn-attach" id="image-upload-btn" title="Send image">📷</button>
+                    <button type="button" class="btn-attach" id="emoji-btn" title="Emoji">😊</button>
+                    <input type="text" id="message-input" placeholder="Message…" autocomplete="off" maxlength="2000">
+                    <button type="submit" class="btn-send" title="Send">➤</button>
+                </form>
+
+                <div id="emoji-picker" class="emoji-picker hidden"></div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Create Room Modal -->
+    <div id="create-room-modal" class="modal hidden">
+        <div class="modal-content">
+            <h3>Create Room</h3>
+            <form id="create-room-form">
+                <input type="text" id="room-name-input" placeholder="Room name (no spaces)" pattern="[a-zA-Z0-9_-]+" maxlength="30" required>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" id="cancel-room-btn">Cancel</button>
+                    <button type="submit" class="btn-primary">Create</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Image Lightbox -->
+    <div id="image-lightbox" class="modal hidden">
+        <div class="lightbox-content">
+            <img id="lightbox-img" src="" alt="Full size">
+            <button class="btn-icon lightbox-close" id="lightbox-close">✕</button>
+        </div>
+    </div>
+
+    <!-- Call Overlay -->
+    <div id="call-overlay" class="call-overlay hidden" data-call-type="voice">
+        <div class="call-ui">
+            <div class="call-videos">
+                <video id="remote-video" class="remote-video" autoplay playsinline></video>
+                <video id="local-video" class="local-video" autoplay playsinline muted></video>
+            </div>
+            <div class="call-info">
+                <div id="call-peer-name" class="call-peer-name"></div>
+                <div id="call-status" class="call-status"></div>
+                <div id="call-timer" class="call-timer"></div>
+            </div>
+            <div class="call-controls">
+                <button class="call-ctrl-btn" id="call-mute-btn" title="Mute">🎤</button>
+                <button class="call-ctrl-btn" id="call-cam-btn" title="Camera">📷</button>
+                <button class="call-ctrl-btn call-end" id="call-end-btn" title="End call">📕</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Incoming Call Modal -->
+    <div id="incoming-call-modal" class="modal hidden">
+        <div class="modal-content incoming-call">
+            <div class="incoming-call-icon">📞</div>
+            <h3>Incoming Call</h3>
+            <div id="incoming-from" class="incoming-from"></div>
+            <div id="incoming-type" class="incoming-type"></div>
+            <div class="incoming-actions">
+                <button class="call-ctrl-btn call-end" id="reject-call-btn">✕</button>
+                <button class="call-ctrl-btn call-accept" id="accept-call-btn">✓</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // Clear old service worker caches to ensure fresh JS
+    if ('caches' in window) {
+        caches.keys().then(keys => keys.forEach(k => caches.delete(k)));
+    }
+    </script>
+    <script src="crypto.js?v=7"></script>
+    <script src="call.js?v=7"></script>
+    <script src="codeformat.js?v=7"></script>
+    <script src="app.js?v=7"></script>
+</body>
+</html>
