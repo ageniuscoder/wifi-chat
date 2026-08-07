@@ -19,27 +19,52 @@ import (
 )
 
 func main() {
+	//load env file
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatalf("Error loading .env file: %s", err.Error())
 	}
+
+	//default value of port
 	envPort := 8000
+
+	//get port from env if provided
 	if strPort := os.Getenv("PORT"); strPort != "" {
 		if intPort, err := strconv.Atoi(strPort); err == nil {
 			envPort = intPort
 		}
 	}
+
+	//get flags from terminal if provided
 	port := flag.Int("port", envPort, "Server port")
 	peer := flag.String("peer", "", "Upstream peer URL (e.g. ws://192.168.1.10:8000/ws/mesh)")
 	nodeName := flag.String("node", "", "Node name for mesh (auto-generated if empty)")
+
+	//parse it before using it
 	flag.Parse()
 
+	//ensure name is not empty
 	name := *nodeName
 	if name == "" {
-		name = fmt.Sprintf("node-%04x", rand.Intn(0xFFFF))
+		name = fmt.Sprintf("node-%04x", rand.Intn(0xFFFF)) //4 digit of hexadecimal number padded with zeroes %04x
 	}
 
-	srv := server.NewServer(*port, name)
+	uploadDir := os.Getenv("UPLOAD_DIR")
+	if uploadDir == "" {
+		uploadDir = "./uploads"
+	}
+
+	maxUploadSize := 10 << 20
+	if v := os.Getenv("MAX_UPLOAD_SIZE"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil {
+			maxUploadSize = n
+		}
+	}
+
+	serverCfg := server.NewServerConfig(uploadDir, int64(maxUploadSize))
+
+	//start the new server
+	srv := server.NewServer(*port, name, serverCfg)
 
 	// Connect to upstream mesh peer(s)
 	if *peer != "" {

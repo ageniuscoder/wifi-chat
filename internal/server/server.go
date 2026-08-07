@@ -24,10 +24,10 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-const (
-	maxUploadSize = 10 << 20 // 10 MB
-	uploadDir     = "./uploads"
-)
+// const (
+// 	maxUploadSize = 10 << 20 // 10 MB
+// 	uploadDir     = "./uploads"
+// )
 
 var allowedImageTypes = map[string]string{
 	"image/jpeg": ".jpg",
@@ -44,6 +44,19 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
+// server config
+type serverConfig struct {
+	UploadDir     string
+	MaxUploadSize int64
+}
+
+func NewServerConfig(uploadDir string, maxUploadSize int64) *serverConfig {
+	return &serverConfig{
+		UploadDir:     uploadDir,
+		MaxUploadSize: maxUploadSize,
+	}
+}
+
 // Server holds the HTTP server and chat hub
 type Server struct {
 	Hub        *hub.Hub
@@ -52,10 +65,11 @@ type Server struct {
 	Discovery  *discovery.Discovery
 	Port       int
 	HTTPServer *http.Server
+	Config     *serverConfig
 }
 
 // NewServer creates a new server
-func NewServer(port int, nodeName string) *Server {
+func NewServer(port int, nodeName string, cfg *serverConfig) *Server {
 	msgStore := store.NewMessageStore("./data")
 	h := hub.NewHub(msgStore)
 	m := mesh.New(nodeName)
@@ -76,6 +90,7 @@ func NewServer(port int, nodeName string) *Server {
 		Mesh:      m,
 		Discovery: disc,
 		Port:      port,
+		Config:    cfg,
 	}
 }
 
@@ -90,14 +105,14 @@ func (s *Server) Start() error {
 	s.Discovery.Start()
 
 	// Ensure uploads directory exists
-	if err := os.MkdirAll(uploadDir, 0755); err != nil {
+	if err := os.MkdirAll(s.Config.UploadDir, 0755); err != nil {
 		return fmt.Errorf("failed to create uploads directory: %w", err)
 	}
 
 	mux := http.NewServeMux()
 
 	// Serve uploaded images
-	mux.Handle("/uploads/", http.StripPrefix("/uploads/", http.FileServer(http.Dir(uploadDir))))
+	mux.Handle("/uploads/", http.StripPrefix("/uploads/", http.FileServer(http.Dir(s.Config.UploadDir))))
 
 	// Image upload endpoint
 	mux.HandleFunc("/api/upload", s.handleUpload)
@@ -197,8 +212,8 @@ func (s *Server) handleUpload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	r.Body = http.MaxBytesReader(w, r.Body, maxUploadSize)
-	if err := r.ParseMultipartForm(maxUploadSize); err != nil {
+	r.Body = http.MaxBytesReader(w, r.Body, s.Config.MaxUploadSize)
+	if err := r.ParseMultipartForm(s.Config.MaxUploadSize); err != nil {
 		http.Error(w, "File too large (max 10MB)", http.StatusBadRequest)
 		return
 	}
@@ -233,7 +248,7 @@ func (s *Server) handleUpload(w http.ResponseWriter, r *http.Request) {
 	rand.Read(randBytes)
 	filename := hex.EncodeToString(randBytes) + ext
 
-	dst, err := os.Create(filepath.Join(uploadDir, filename))
+	dst, err := os.Create(filepath.Join(s.Config.UploadDir, filename))
 	if err != nil {
 		log.Printf("Error creating upload file: %v", err)
 		http.Error(w, "Failed to save file", http.StatusInternalServerError)
