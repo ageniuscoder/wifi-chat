@@ -54,6 +54,11 @@ func main() {
 		uploadDir = "./uploads"
 	}
 
+	localMsgPersistDir := os.Getenv("LOCAL_MSG_PERSIST_DIR")
+	if localMsgPersistDir == "" {
+		localMsgPersistDir = "./data"
+	}
+
 	maxUploadSize := 10 << 20
 	if v := os.Getenv("MAX_UPLOAD_SIZE"); v != "" {
 		if n, err := strconv.Atoi(v); err == nil {
@@ -61,7 +66,7 @@ func main() {
 		}
 	}
 
-	serverCfg := server.NewServerConfig(uploadDir, int64(maxUploadSize))
+	serverCfg := server.NewServerConfig(uploadDir, localMsgPersistDir, int64(maxUploadSize))
 
 	//start the new server
 	srv := server.NewServer(*port, name, serverCfg)

@@ -63,20 +63,20 @@ const (
 
 // Message is the JSON envelope for all WebSocket communication
 type Message struct {
-	Type      MessageType `json:"type"`
-	Content   string      `json:"content,omitempty"`
-	Room      string      `json:"room,omitempty"`
-	From      string      `json:"from,omitempty"`
-	To        string      `json:"to,omitempty"`
-	Username  string      `json:"username,omitempty"`
-	Timestamp int64       `json:"ts,omitempty"`
-	Rooms     []string    `json:"rooms,omitempty"`
-	Users     []string    `json:"users,omitempty"`
-	Messages  []Message   `json:"messages,omitempty"`
-	Error     string      `json:"message,omitempty"`
-	ImageURL  string      `json:"image_url,omitempty"`
-	SDP       string      `json:"sdp,omitempty"`
-	Candidate interface{} `json:"candidate,omitempty"`
+	Type       MessageType       `json:"type"` //struct tag
+	Content    string            `json:"content,omitempty"`
+	Room       string            `json:"room,omitempty"`
+	From       string            `json:"from,omitempty"`
+	To         string            `json:"to,omitempty"`
+	Username   string            `json:"username,omitempty"`
+	Timestamp  int64             `json:"ts,omitempty"`
+	Rooms      []string          `json:"rooms,omitempty"`
+	Users      []string          `json:"users,omitempty"`
+	Messages   []Message         `json:"messages,omitempty"`
+	Error      string            `json:"message,omitempty"`
+	ImageURL   string            `json:"image_url,omitempty"`
+	SDP        string            `json:"sdp,omitempty"`
+	Candidate  interface{}       `json:"candidate,omitempty"`
 	CallType   string            `json:"call_type,omitempty"`
 	ID         string            `json:"id,omitempty"`
 	PublicKey  string            `json:"public_key,omitempty"`

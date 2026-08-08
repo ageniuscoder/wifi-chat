@@ -34,3 +34,5 @@ go.work.sum
 # Persistent runtime data that should not be committed
 # Keep chat history in the local data directory only.
 data/messages.jsonl
+
+notes

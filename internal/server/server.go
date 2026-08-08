@@ -24,11 +24,6 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-// const (
-// 	maxUploadSize = 10 << 20 // 10 MB
-// 	uploadDir     = "./uploads"
-// )
-
 var allowedImageTypes = map[string]string{
 	"image/jpeg": ".jpg",
 	"image/png":  ".png",
@@ -46,14 +41,16 @@ var upgrader = websocket.Upgrader{
 
 // server config
 type serverConfig struct {
-	UploadDir     string
-	MaxUploadSize int64
+	UploadDir          string
+	MaxUploadSize      int64
+	LocalMsgPersistDir string
 }
 
-func NewServerConfig(uploadDir string, maxUploadSize int64) *serverConfig {
+func NewServerConfig(uploadDir, localMsgPersistDir string, maxUploadSize int64) *serverConfig {
 	return &serverConfig{
-		UploadDir:     uploadDir,
-		MaxUploadSize: maxUploadSize,
+		UploadDir:          uploadDir,
+		MaxUploadSize:      maxUploadSize,
+		LocalMsgPersistDir: localMsgPersistDir,
 	}
 }
 
@@ -70,7 +67,7 @@ type Server struct {
 
 // NewServer creates a new server
 func NewServer(port int, nodeName string, cfg *serverConfig) *Server {
-	msgStore := store.NewMessageStore("./data")
+	msgStore := store.NewMessageStore(cfg.LocalMsgPersistDir)
 	h := hub.NewHub(msgStore)
 	m := mesh.New(nodeName)
 	h.SetMesh(m)
