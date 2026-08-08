@@ -12,6 +12,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -44,14 +45,42 @@ type serverConfig struct {
 	UploadDir          string
 	MaxUploadSize      int64
 	LocalMsgPersistDir string
+	MaxContentLen      int64
+	Port               int64
 }
 
-func NewServerConfig(uploadDir, localMsgPersistDir string, maxUploadSize int64) *serverConfig {
-	return &serverConfig{
-		UploadDir:          uploadDir,
-		MaxUploadSize:      maxUploadSize,
-		LocalMsgPersistDir: localMsgPersistDir,
+func LoadConfig() *serverConfig {
+	cfg := &serverConfig{
+		UploadDir:          "./uploads",
+		MaxUploadSize:      10 << 20,
+		LocalMsgPersistDir: "./data",
+		MaxContentLen:      10000,
+		Port:               8000,
 	}
+
+	if strPort := os.Getenv("PORT"); strPort != "" {
+		if intPort, err := strconv.Atoi(strPort); err == nil {
+			cfg.Port = int64(intPort)
+		}
+	}
+	if uploadDir := os.Getenv("UPLOAD_DIR"); uploadDir != "" {
+		cfg.UploadDir = uploadDir
+	}
+	if localMsgPersistDir := os.Getenv("LOCAL_MSG_PERSIST_DIR"); localMsgPersistDir != "" {
+		cfg.LocalMsgPersistDir = localMsgPersistDir
+	}
+	if v := os.Getenv("MAX_UPLOAD_SIZE"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil {
+			cfg.MaxUploadSize = int64(n)
+		}
+	}
+	if v := os.Getenv("MAX_CONTENT_LENGTH"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil {
+			cfg.MaxContentLen = int64(n)
+		}
+	}
+
+	return cfg
 }
 
 // Server holds the HTTP server and chat hub
@@ -68,7 +97,7 @@ type Server struct {
 // NewServer creates a new server
 func NewServer(port int, nodeName string, cfg *serverConfig) *Server {
 	msgStore := store.NewMessageStore(cfg.LocalMsgPersistDir)
-	h := hub.NewHub(msgStore)
+	h := hub.NewHub(msgStore, cfg.MaxContentLen)
 	m := mesh.New(nodeName)
 	h.SetMesh(m)
 

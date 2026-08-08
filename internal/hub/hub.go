@@ -43,21 +43,25 @@ type Hub struct {
 	// Rate limiting: username -> last message time
 	rateLimiter map[string]time.Time
 
+	// Max msg limit
+	MaxContentLen int64
+
 	mu sync.RWMutex
 }
 
 // NewHub creates a new Hub
-func NewHub(s *store.MessageStore) *Hub {
+func NewHub(s *store.MessageStore, maxContentLen int64) *Hub {
 	h := &Hub{
-		Clients:      make(map[*Client]bool),
-		UserClients:  make(map[string]*Client),
-		Rooms:        make(map[string]map[*Client]bool),
-		Register:     make(chan *Client),
-		Unregister:   make(chan *Client),
-		joinCooldown: make(map[string]time.Time),
-		rateLimiter:  make(map[string]time.Time),
-		Store:       s,
-		RemoteUsers: make(map[string][]string),
+		Clients:       make(map[*Client]bool),
+		UserClients:   make(map[string]*Client),
+		Rooms:         make(map[string]map[*Client]bool),
+		Register:      make(chan *Client),
+		Unregister:    make(chan *Client),
+		joinCooldown:  make(map[string]time.Time),
+		rateLimiter:   make(map[string]time.Time),
+		Store:         s,
+		RemoteUsers:   make(map[string][]string),
+		MaxContentLen: maxContentLen,
 	}
 	// Create default room
 	h.Rooms["general"] = make(map[*Client]bool)
@@ -346,7 +350,7 @@ func (h *Hub) handleMessage(client *Client, msg models.Message) {
 		return
 	}
 
-	msg.Content = models.TruncateContent(msg.Content)
+	msg.Content = models.TruncateContent(msg.Content, int(h.MaxContentLen))
 
 	ts := models.NewTimestamp()
 	msgID := msg.MessageID
@@ -422,7 +426,7 @@ func (h *Hub) handleDM(client *Client, msg models.Message) {
 	target, exists := h.UserClients[msg.To]
 	h.mu.RUnlock()
 
-	msg.Content = models.TruncateContent(msg.Content)
+	msg.Content = models.TruncateContent(msg.Content, int(h.MaxContentLen))
 
 	if !exists {
 		// Target might be on a remote mesh node — propagate and echo to sender

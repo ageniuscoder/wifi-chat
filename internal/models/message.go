@@ -127,9 +127,6 @@ func GenerateMsgID() string {
 	return fmt.Sprintf("%d-%s", time.Now().UnixNano(), hex.EncodeToString(b))
 }
 
-// MaxContentLength is the maximum allowed message content length
-const MaxContentLength = 10000
-
 var usernameRegex = regexp.MustCompile(`^[a-zA-Z0-9_\-\.]{1,32}$`)
 
 // ValidateUsername checks if a username is valid
@@ -139,7 +136,7 @@ func ValidateUsername(username string) bool {
 
 // TruncateContent limits content to MaxContentLength (measured in runes, not bytes,
 // to avoid splitting multi-byte UTF-8 characters like emoji)
-func TruncateContent(s string) string {
+func TruncateContent(s string, MaxContentLength int) string {
 	runes := []rune(s)
 	if len(runes) > MaxContentLength {
 		return string(runes[:MaxContentLength])

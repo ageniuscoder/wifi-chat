@@ -8,7 +8,6 @@ import (
 	"math/rand"
 	"os"
 	"os/signal"
-	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -25,18 +24,10 @@ func main() {
 		log.Fatalf("Error loading .env file: %s", err.Error())
 	}
 
-	//default value of port
-	envPort := 8000
-
-	//get port from env if provided
-	if strPort := os.Getenv("PORT"); strPort != "" {
-		if intPort, err := strconv.Atoi(strPort); err == nil {
-			envPort = intPort
-		}
-	}
+	serverCfg := server.LoadConfig()
 
 	//get flags from terminal if provided
-	port := flag.Int("port", envPort, "Server port")
+	port := flag.Int("port", int(serverCfg.Port), "Server port")
 	peer := flag.String("peer", "", "Upstream peer URL (e.g. ws://192.168.1.10:8000/ws/mesh)")
 	nodeName := flag.String("node", "", "Node name for mesh (auto-generated if empty)")
 
@@ -48,26 +39,6 @@ func main() {
 	if name == "" {
 		name = fmt.Sprintf("node-%04x", rand.Intn(0xFFFF)) //4 digit of hexadecimal number padded with zeroes %04x
 	}
-
-	uploadDir := os.Getenv("UPLOAD_DIR")
-	if uploadDir == "" {
-		uploadDir = "./uploads"
-	}
-
-	localMsgPersistDir := os.Getenv("LOCAL_MSG_PERSIST_DIR")
-	if localMsgPersistDir == "" {
-		localMsgPersistDir = "./data"
-	}
-
-	maxUploadSize := 10 << 20
-	if v := os.Getenv("MAX_UPLOAD_SIZE"); v != "" {
-		if n, err := strconv.Atoi(v); err == nil {
-			maxUploadSize = n
-		}
-	}
-
-	serverCfg := server.NewServerConfig(uploadDir, localMsgPersistDir, int64(maxUploadSize))
-
 	//start the new server
 	srv := server.NewServer(*port, name, serverCfg)
 
