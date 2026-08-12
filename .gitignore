@@ -35,4 +35,4 @@ go.work.sum
 # Keep chat history in the local data directory only.
 data/messages.jsonl
 
-notes
+#notes   //for notes
