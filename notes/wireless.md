@@ -1,6 +1,6 @@
 # WiFi Relay and Multi-Hop Communication
 
-**Reference**: [How Wireless Communication Actually Works - Engineering Explained](https://evelta.com/blog/how-wireless-communication-actually-works-engineering-explained/)
+**Reference**: [How Wireless Communication Actually Works - Engineering Explained](https://evelta.com/blog/how-wireless-communication-actually-works-engineering-explained/) || [About Wifi Direct](https://www.netspotapp.com/blog/all-about-wifi/what-is-wifi-direct.html)
 
 ---
 
@@ -43,6 +43,7 @@ WiFi Direct is the standard way two phones connect without an external router.
 5. Both phones can now exchange data directly
 
 **Example:**
+
 ```
 Phone A (Group Owner) <--WiFi Direct--> Phone B (Client)
 ```
@@ -71,6 +72,7 @@ A --WiFi--> B --WiFi--> C --WiFi--> D
 ```
 
 **The problem:**
+
 - A and D cannot communicate directly
 - B and C are relay nodes in between
 - A sends data to B → B forwards to C → C forwards to D
@@ -91,7 +93,7 @@ This is handled by a **routing table**.
 ### Example Routing Table (On Node B)
 
 | Destination | Next Hop |
-|-------------|----------|
+| ----------- | -------- |
 | A           | A        |
 | C           | C        |
 | D           | C        |
@@ -121,6 +123,7 @@ Forwarding can happen at **two main layers**:
 - TTL field in IP header is **decremented at each hop** to prevent loops
 
 **Common routing protocols** used in phone-based mesh apps:
+
 - OLSR (Optimized Link State Routing)
 - AODV (Ad Hoc On-Demand Distance Vector)
 - B.A.T.M.A.N. (Better Approach To Mobile Ad-hoc Networking)
@@ -139,6 +142,7 @@ Each node sends beacon or "hello" messages to find nearby nodes.
 ### 2. Build a Routing Table
 
 A routing protocol chooses the best path to each destination based on metrics:
+
 - **Number of hops** (prefer shorter paths)
 - **Signal strength / link quality** (prefer stronger links)
 - **Battery level** (prefer nodes with more power)
@@ -146,6 +150,7 @@ A routing protocol chooses the best path to each destination based on metrics:
 ### 3. Forward Data Hop-by-Hop
 
 When a packet arrives, the relay node checks:
+
 - **Is this packet for me?** → Yes: deliver to app
 - **Is this packet for me?** → No: look up next hop and retransmit
 
@@ -195,10 +200,12 @@ A -- GO/Client --> B -- GO/Client --> C -- GO/Client --> D
 ```
 
 The relay phone **B** must be part of **two WiFi Direct groups simultaneously**:
+
 - One group with A
 - Another group with C
 
 **Requirements:**
+
 - Multi-role concurrent WiFi support, OR
 - Multiple WiFi radios/interfaces
 
@@ -207,6 +214,7 @@ The relay phone **B** must be part of **two WiFi Direct groups simultaneously**:
 ### Real-World Solutions
 
 Many mesh apps combine multiple technologies:
+
 - WiFi Direct for some links
 - Bluetooth for other links
 - Normal WiFi AP/client mode
@@ -261,6 +269,7 @@ Think of a **chain of people passing a message**:
 ```
 
 Each person doesn't need to understand the message. They only need to know:
+
 - **Who is the final destination?**
 - **Who is the next person in the chain?**
 
@@ -270,12 +279,12 @@ Each person doesn't need to understand the message. They only need to know:
 
 ## Summary: Communication Modes Comparison
 
-| Mode | Hops | Typical Range | Use Case |
-|------|------|---------------|----------|
-| **Normal WiFi via AP** | 2 | ~30-100m | Both phones on same router |
-| **WiFi Direct / Hotspot** | 1 | ~30-100m | Direct phone-to-phone |
-| **Single Relay** | 2 | ~60-200m | One phone forwards between two others |
-| **Multi-Hop Mesh** | 3+ | ~90-300m+ | Chain of phones relays data |
+| Mode                      | Hops | Typical Range | Use Case                              |
+| ------------------------- | ---- | ------------- | ------------------------------------- |
+| **Normal WiFi via AP**    | 2    | ~30-100m      | Both phones on same router            |
+| **WiFi Direct / Hotspot** | 1    | ~30-100m      | Direct phone-to-phone                 |
+| **Single Relay**          | 2    | ~60-200m      | One phone forwards between two others |
+| **Multi-Hop Mesh**        | 3+   | ~90-300m+     | Chain of phones relays data           |
 
 ---
 
@@ -285,4 +294,210 @@ When two phones are **out of range**, they use **intermediate relay nodes**. Eac
 
 ---
 
-*This content is for reference and educational purposes. For WiFi Chat implementation details, see [mesh-and-discovery.md](mesh-and-discovery.md).*
+_This content is for reference and educational purposes. For WiFi Chat implementation details, see [mesh-and-discovery.md](mesh-and-discovery.md)._
+
+---
+
+## Part 8: Ad-Hoc Wireless Networks
+
+### What is an Ad-Hoc Network?
+
+An **ad-hoc network** is a **decentralized, temporary wireless network** formed by participating devices **without relying on any pre-existing infrastructure** (like routers or access points).
+
+An ad hoc wireless network is a decentralized, infrastructure-less wireless network in which participating devices communicate directly and can also forward packets for one another, often using multi-hop routing.
+
+The three concepts you should remember most strongly are:
+
+No fixed infrastructure → devices also can act as routers → topology can change dynamically.
+
+**Key characteristic**: Every participating device acts as both a **host and a router** — they can both send/receive data and relay packets for other devices.
+
+### Infrastructure vs. Ad-Hoc
+
+#### Infrastructure Network (Traditional WiFi)
+
+```
+Phone A --WiFi--> Router/AP <--WiFi-- Phone B
+                 (Central hub)
+```
+
+- Requires a **central access point (AP)**
+- All communication goes through the AP
+- If the AP fails, the network collapses
+- Easy to set up, widely supported
+
+#### Ad-Hoc Network
+
+```
+Phone A <--WiFi--> Phone B <--WiFi--> Phone C
+                    (Router)
+  |                                      |
+  +---------- Can relay packets --------+
+```
+
+- **No central coordinator required**
+- Devices communicate **peer-to-peer**
+- Each device forwards packets for others
+- Self-healing: if one node fails, others can find alternate paths
+- More complex to implement
+
+### MANET: Mobile Ad-Hoc Networks
+
+A **MANET** (Mobile Ad-Hoc NETwork) is a special type of ad-hoc network where:
+
+1. **Nodes are mobile** — devices can move in and out of range
+2. **Topology is dynamic** — the network constantly changes
+3. **No fixed infrastructure** — no permanent routers or base stations
+4. **Self-organizing** — routing protocols automatically discover paths
+
+**Characteristics of MANETs:**
+
+| Characteristic         | Description                                   |
+| ---------------------- | --------------------------------------------- |
+| **Dynamic Topology**   | Nodes join, leave, and move around            |
+| **Limited Bandwidth**  | Wireless links are slower than wired networks |
+| **Energy Constrained** | Mobile devices have battery limits            |
+| **Hop-Limited Range**  | Single-hop communication limited to ~30-100m  |
+| **Multi-Hop Routes**   | Messages may traverse 3+ hops                 |
+| **Decentralized**      | No central server or authority needed         |
+
+### How Ad-Hoc Networks Work
+
+#### Step 1: Discovery
+
+Devices send **hello messages** (beacon frames) to find neighboring devices.
+
+```
+Phone A: "Hello! I'm here at location X, range Y, etc."
+Phone B: "Hello! I'm here at location X, range Y, etc."
+Phone C: "Hello! I'm here at location X, range Y, etc."
+```
+
+#### Step 2: Route Building
+
+Each device learns about neighbors and builds a **routing table** using a routing protocol:
+
+```
+Phone B's Routing Table:
+├── Destination: Phone A → Next Hop: Phone A (direct)
+├── Destination: Phone C → Next Hop: Phone C (direct)
+└── Destination: Phone D → Next Hop: Phone C (via C)
+```
+
+#### Step 3: Packet Forwarding
+
+When a packet arrives:
+
+```
+if destination == my address:
+    deliver to application
+else:
+    look up next hop for destination
+    forward packet to next hop
+```
+
+#### Step 4: Topology Updates
+
+As devices move or fail, the routing protocol **recalculates paths** and updates routing tables.
+
+### Ad-Hoc Network Advantages
+
+✅ **No Infrastructure Required**
+
+- Works in any location (remote areas, disaster zones, offline)
+- Doesn't depend on ISPs or cellular networks
+
+✅ **Resilient**
+
+- Self-healing: if one node fails, alternate paths are found
+- No single point of failure
+
+✅ **Scalable**
+
+- Can grow by simply adding more devices
+- No central server bottleneck
+
+✅ **Low Cost**
+
+- No need to deploy routers or access points
+- Uses standard WiFi hardware
+
+### Ad-Hoc Network Disadvantages
+
+❌ **Complex Routing**
+
+- Requires sophisticated routing protocols (AODV, OLSR, BATMAN)
+- Route discovery takes time
+
+❌ **Lower Throughput**
+
+- Decreases with each hop (halved per hop in shared spectrum)
+- Collisions and interference more likely
+
+❌ **Higher Latency**
+
+- Each hop adds 10-50ms delay
+- Route recalculation adds delays during topology changes
+
+❌ **Battery Drain**
+
+- Relay nodes must stay awake and process traffic for others
+- Significantly reduces device battery life
+
+❌ **Limited Range**
+
+- Single WiFi range ~30-100m
+- Multi-hop extends this but with latency/bandwidth cost
+
+❌ **Security Challenges**
+
+- Relay nodes can eavesdrop on traffic unless encrypted
+- More complex access control
+
+### Common Ad-Hoc Routing Protocols
+
+| Protocol   | Type      | How It Works                                          |
+| ---------- | --------- | ----------------------------------------------------- |
+| **AODV**   | On-demand | Sends route request when needed; routes on-demand     |
+| **OLSR**   | Proactive | Constantly maintains routing tables for all nodes     |
+| **BATMAN** | Advanced  | Uses link quality estimation; easy to implement       |
+| **HWMP**   | Hybrid    | Used in WiFi mesh (802.11s); mixes proactive/reactive |
+
+### Real-World Ad-Hoc Examples
+
+- **Offline Messaging Apps**: Briar, Bridgefy, FireChat (work without internet)
+- **Disaster Response**: Emergency networks after natural disasters
+- **Military Networks**: Tactical communication in field operations
+- **IoT Sensors**: Self-organizing sensor networks
+- **WiFi-Chat**: Forms a local mesh for phone-to-phone communication
+
+### Relationship to WiFi-Chat
+
+**WiFi-Chat is fundamentally an ad-hoc network application** because:
+
+1. ✅ **No infrastructure required** — phones don't need a router or internet
+2. ✅ **Peer-to-peer communication** — phones connect directly
+3. ✅ **Multi-hop capable** — relay phones forward messages
+4. ✅ **Self-organizing** — discovery and routing are automatic
+5. ✅ **Decentralized** — no central server
+
+**Key difference**: WiFi-Chat uses **WiFi Direct** for the underlying layer-2 transport, but the **application layer** implements ad-hoc network concepts through:
+
+- Device discovery ([discovery.go](../internal/discovery/discovery.go))
+- Relay/hub functionality ([hub.go](../internal/hub/hub.go))
+- Mesh routing ([mesh.go](../internal/mesh/mesh.go))
+- Message forwarding
+
+### Summary: Ad-Hoc vs Traditional Networking
+
+| Aspect                | Ad-Hoc Network      | Infrastructure Network  |
+| --------------------- | ------------------- | ----------------------- |
+| **Central Authority** | None                | Router/AP required      |
+| **Setup Time**        | Automatic/fast      | Manual configuration    |
+| **Scalability**       | Self-scaling        | Limited by AP           |
+| **Resilience**        | Self-healing        | Single point of failure |
+| **Best For**          | Temporary, offline  | Permanent, online       |
+| **Complexity**        | High (routing)      | Low (infrastructure)    |
+| **Range Extension**   | Via multi-hop relay | Via repeater/extender   |
+
+---
