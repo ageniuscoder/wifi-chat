@@ -261,6 +261,27 @@ func (m *Mesh) Propagate(msg models.Message) {
 
 // propagateExcept sends to all peers except one (used to avoid echo)
 func (m *Mesh) propagateExcept(msg models.Message, exceptID string) {
+	if msg.ID == "" {
+		msg.ID = models.GenerateMsgID()
+	}
+	// Set distributed mesh fields if not already set
+	if msg.MessageID == "" {
+		msg.MessageID = msg.ID
+	}
+	if msg.TTL == 0 {
+		msg.TTL = MaxTTL
+	}
+	if msg.OriginNode == "" {
+		msg.OriginNode = m.NodeID
+	}
+	if len(msg.HopPath) == 0 {
+		msg.HopPath = []string{m.NodeID}
+	}
+
+	if m.alreadySeen(msg.ID) {
+		return
+	}
+
 	data, err := json.Marshal(msg)
 	if err != nil {
 		return
