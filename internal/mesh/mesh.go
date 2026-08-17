@@ -6,8 +6,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/gorilla/websocket"
 	"wifi-chat/internal/models"
+
+	"github.com/gorilla/websocket"
 )
 
 // Mesh manages peer-to-peer connections for multi-hop WiFi relay.
@@ -17,8 +18,8 @@ import (
 type Mesh struct {
 	NodeID string
 
-	peers   map[string]*Peer
-	peerMu  sync.RWMutex
+	peers  map[string]*Peer
+	peerMu sync.RWMutex
 
 	connectedURLs   map[string]bool // tracks URLs we're already connected/connecting to
 	connectedURLsMu sync.Mutex
@@ -55,9 +56,9 @@ type Peer struct {
 }
 
 const (
-	MaxTTL            = 7
-	AnnounceInterval  = 10 * time.Second
-	MaxOutboxPerUser  = 100
+	MaxTTL           = 7
+	AnnounceInterval = 10 * time.Second
+	MaxOutboxPerUser = 100
 )
 
 // New creates a new Mesh instance
@@ -94,14 +95,20 @@ func (m *Mesh) GetAllKnownUsers() []string {
 
 	m.localUsersMu.RLock()
 	for _, u := range m.localUsers {
-		if !seen[u] { result = append(result, u); seen[u] = true }
+		if !seen[u] {
+			result = append(result, u)
+			seen[u] = true
+		}
 	}
 	m.localUsersMu.RUnlock()
 
 	m.remoteUsersMu.RLock()
 	for _, users := range m.remoteUsers {
 		for _, u := range users {
-			if !seen[u] { result = append(result, u); seen[u] = true }
+			if !seen[u] {
+				result = append(result, u)
+				seen[u] = true
+			}
 		}
 	}
 	m.remoteUsersMu.RUnlock()
@@ -127,16 +134,16 @@ func (m *Mesh) ConnectPeer(url string) {
 
 	go func() {
 		for {
-			if err := m.dialPeer(url); err != nil {
+			if err := m.dialPeer(url); err != nil { //no connection established, then retry
 				log.Printf("[MESH] Peer connect failed (%s): %v — retrying in 5s", url, err)
-			} else {
+			} else { //disconnection of peer after succesfull connection, now retry of connection again
 				log.Printf("[MESH] Peer disconnected (%s) — reconnecting in 5s", url)
 			}
 			select {
 			case <-m.stopCh:
 				log.Printf("[MESH] Stopping reconnect loop for %s", url)
 				return
-			case <-time.After(5 * time.Second):
+			case <-time.After(5 * time.Second): //it is basically timer, which listen on it,s C chan in 5 sec
 			}
 		}
 	}()
